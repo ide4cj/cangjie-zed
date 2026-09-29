@@ -1,0 +1,56 @@
+name: Bump
+
+# A release of the extension, by hand or once Renovate's PR moves .cjls-version to a new minor:
+# `cog bump` from the conventional commits, then release.yml.
+on:
+  push:
+    branches: [master]
+    paths: [.cjls-version]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  bump:
+    name: cog bump
+    needs: ci
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - id: app
+        if: vars.RELEASE_APP_ID != ''
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token || github.token }}
+      - uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
+      - id: bump
+        run: |
+          next=$(cog bump --auto --dry-run 2>/dev/null || true)
+          if [ -z "$next" ]; then echo "::notice::nothing to release"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cog bump --auto
+          echo "version=${next#v}" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: bump
+    if: needs.bump.outputs.version
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.bump.outputs.version }}
+    secrets: inherit
+    permissions:
+      contents: write

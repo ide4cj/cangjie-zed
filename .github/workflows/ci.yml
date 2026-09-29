@@ -1,0 +1,74 @@
+name: CI
+
+# The extension as Zed builds it (wasm32-wasip2), its unit tests, and its queries against the
+# grammar it pins. Zed runs no extension headless: the server's side is cjls's tests/e2e (cjls's D32).
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    name: Conventional commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
+          args: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+      # a squash merge makes the title the commit on master, and `cog bump` reads that
+      - name: Check the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: cog verify "$TITLE"
+
+  rust:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --target wasm32-wasip2 -- -D warnings
+      - run: cargo test
+      - run: cargo build --release --target wasm32-wasip2
+
+  queries:
+    name: Queries
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global tree-sitter-cli@0.26
+      # the revision extension.toml pins, alone: the repository carries a large test corpus
+      - name: The grammar
+        run: |
+          repo=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^repository = "\(.*\)"/\1/p' extension.toml)
+          rev=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^rev = "\(.*\)"/\1/p' extension.toml)
+          git init -q grammar
+          git -C grammar fetch -q --depth 1 "$repo" "$rev"
+          git -C grammar checkout -q FETCH_HEAD
+          (cd grammar && tree-sitter build -o cangjie.so)
+      - run: test/queries.sh grammar
