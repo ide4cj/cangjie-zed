@@ -39,8 +39,14 @@ night, fetched again at every start of Zed. The server's log: **dev: open langua
 ```sh
 cargo test                                    # the unit tests, natively
 cargo build --release --target wasm32-wasip2  # as Zed builds it
+script/highlights.py <tree-sitter-cangjie checkout>  # highlights.scm from its queries
 test/queries.sh <tree-sitter-cangjie checkout built with `tree-sitter build`>
 ```
+
+`languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
+revision `extension.toml` pins, its captures renamed to Zed's, then `script/highlights.zed.scm`. To
+take the grammar's changes, move `rev` (Renovate proposes its `main` weekly) and run the script; CI
+fails while the file is not what the script makes, and on a capture the script does not map.
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
 [CONTRIBUTING](https://github.com/ide4cj/.github/blob/main/CONTRIBUTING.md)). A release (`bump.yml`,
@@ -50,5 +56,5 @@ by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR to
 
 ## License
 
-MIT or Apache-2.0, as cjls. The queries under `languages/cangjie/` start from tree-sitter-cangjie's
+MIT or Apache-2.0, as cjls. `languages/cangjie/highlights.scm` is made from tree-sitter-cangjie's
 (MIT).

@@ -71,4 +71,5 @@ jobs:
           git -C grammar fetch -q --depth 1 "$repo" "$rev"
           git -C grammar checkout -q FETCH_HEAD
           (cd grammar && tree-sitter build -o cangjie.so)
+      - run: python3 script/highlights.py grammar --check
       - run: test/queries.sh grammar
