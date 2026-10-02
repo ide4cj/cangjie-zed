@@ -1,0 +1,16 @@
+id = "cangjie"
+name = "Cangjie"
+description = "Cangjie: the cjls language server, and tree-sitter highlighting"
+version = "0.0.0"
+schema_version = 1
+authors = ["The cjls contributors"]
+repository = "https://github.com/ide4cj/cangjie-zed"
+
+[language_servers.cjls]
+name = "cjls"
+languages = ["Cangjie"]
+
+# script/highlights.py makes languages/cangjie/highlights.scm from this revision's queries
+[grammars.cangjie]
+repository = "https://github.com/BonZirka/tree-sitter-cangjie"
+rev = "c354d8e16ea890c8fa157bb8c34a0092f793fdf1"

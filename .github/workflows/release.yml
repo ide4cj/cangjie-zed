@@ -1,0 +1,48 @@
+name: Release
+
+# A version of the extension, `cog bump` in bump.yml, pushed to Zed's registry as a PR to
+# zed-industries/extensions when ZED_EXTENSIONS_TOKEN is set (a token that can push to a fork of it).
+# Rare on purpose: the extension downloads the newest cjls of its minor by itself (cjls's D32).
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version, tagged already
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Zed's registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ inputs.version }}
+      ZED_EXTENSIONS_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+      - name: GitHub release
+        run: |
+          gh release create "v$VERSION" --title "v$VERSION" --verify-tag --notes "cjls: the newest release within $(cut -d. -f1-2 .cjls-version)."
+      - if: env.ZED_EXTENSIONS_TOKEN != ''
+        uses: huacnlee/zed-extension-action@v1
+        with:
+          extension-name: cangjie
+          push-to: ide4cj/extensions
+        env:
+          COMMITTER_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
+      - if: env.ZED_EXTENSIONS_TOKEN == ''
+        run: |
+          echo "::notice::no ZED_EXTENSIONS_TOKEN: open the PR to zed-industries/extensions by hand"

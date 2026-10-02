@@ -1,0 +1,130 @@
+name: CI
+
+# The extension as Zed builds it (wasm32-wasip2), its unit tests, its queries against the grammar it
+# pins, and the cjls it downloads: the pinned release and the nightly — or cjls's build of this
+# branch's name when cjls has one — started as the extension starts it. Zed runs no extension
+# headless: the rest of the server's side is cjls's tests/e2e (cjls's D32). Every day too, when a
+# failure opens an issue.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+  schedule:
+    - cron: "0 5 * * *" # after cjls's nightly
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    name: Conventional commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
+          args: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+      # a squash merge makes the title the commit on master, and `cog bump` reads that
+      - name: Check the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: cog verify "$TITLE"
+
+  rust:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --target wasm32-wasip2 -- -D warnings
+      - run: cargo test
+      - run: cargo build --release --target wasm32-wasip2
+
+  queries:
+    name: Queries
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global tree-sitter-cli@0.26
+      # the revision extension.toml pins, alone: the repository carries a large test corpus
+      - name: The grammar
+        run: |
+          repo=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^repository = "\(.*\)"/\1/p' extension.toml)
+          rev=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^rev = "\(.*\)"/\1/p' extension.toml)
+          git init -q grammar
+          git -C grammar fetch -q --depth 1 "$repo" "$rev"
+          git -C grammar checkout -q FETCH_HEAD
+          (cd grammar && tree-sitter build -o cangjie.so)
+      - run: python3 script/highlights.py grammar --check
+      - run: test/queries.sh grammar
+
+  server:
+    name: cjls ${{ matrix.cjls }} (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        cjls: [pin, nightly]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        shell: bash
+        run: echo "version=$([ ${{ matrix.cjls }} = pin ] && cat .cjls-version || echo nightly)" >> "$GITHUB_OUTPUT"
+      # the assets the extension downloads, by the names src/lib.rs's `target` gives
+      - id: cjls
+        uses: ide4cj/.github/actions/cjls@master
+        with:
+          version: ${{ steps.version.outputs.version }}
+      - if: steps.cjls.outputs.path == ''
+        shell: bash
+        run: echo "::error::no cjls ${{ steps.version.outputs.version }} for this platform" && exit 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python test/smoke.py "${{ steps.cjls.outputs.path }}" test
+        shell: bash
+
+  # a red daily run is an issue, one at a time: the Monday triage starts from those
+  report:
+    name: Report the daily run
+    needs: [rust, queries, server]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - run: |
+          title="The daily run against cjls nightly failed"
+          open=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --repo "$GITHUB_REPOSITORY" --body "Failed again: $RUN"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --type Bug --label S-needs-triage --body "$RUN"
+          fi

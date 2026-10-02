@@ -34,21 +34,47 @@ In this order:
 `settings.version` downloads another release: a tag (`v0.2.0`), or `nightly`, cjls's master every
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
+`binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not
+know (`--stdio`) is a usage error.
+
+## The project
+
+cjls finds a project under each folder Zed opens: `cj-project.json`, else `cjpm.toml`, else the
+loose `.cj` files. Others go in `initialization_options` ([cjls's
+options](https://github.com/ide4cj/cjls/blob/master/docs/lsp-extensions.md#initialization-options)):
+
+```json
+{
+  "lsp": {
+    "cjls": {
+      "initialization_options": { "linkedProjects": ["/path/to/cj-project.json", "/path/to/dir"] }
+    }
+  }
+}
+```
+
 ## Development
 
 ```sh
 cargo test                                    # the unit tests, natively
 cargo build --release --target wasm32-wasip2  # as Zed builds it
+script/highlights.py <tree-sitter-cangjie checkout>  # highlights.scm from its queries
 test/queries.sh <tree-sitter-cangjie checkout built with `tree-sitter build`>
+test/smoke.py <cjls> test                     # cjls started as the extension starts it
 ```
 
+`languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
+revision `extension.toml` pins, its captures renamed to Zed's, then `script/highlights.zed.scm`. To
+take the grammar's changes, move `rev` (Renovate proposes its `main` weekly) and run the script; CI
+fails while the file is not what the script makes, and on a capture the script does not map.
+
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
-[CONTRIBUTING](https://github.com/ide4cj/.github/blob/main/CONTRIBUTING.md)). A release (`bump.yml`,
+[CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
 by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR to
 [zed-industries/extensions](https://github.com/zed-industries/extensions) from the fork
 `ide4cj/extensions` when `ZED_EXTENSIONS_TOKEN` is set.
 
 ## License
 
-MIT or Apache-2.0, as cjls. The queries under `languages/cangjie/` start from tree-sitter-cangjie's
+MIT or Apache-2.0, as cjls. `languages/cangjie/highlights.scm` is made from tree-sitter-cangjie's
 (MIT).
