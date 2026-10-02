@@ -1,7 +1,7 @@
 id = "cangjie"
 name = "Cangjie"
 description = "Cangjie: the cjls language server, and tree-sitter highlighting"
-version = "0.0.0"
+version = "0.1.0"
 schema_version = 1
 authors = ["The cjls contributors"]
 repository = "https://github.com/ide4cj/cangjie-zed"
