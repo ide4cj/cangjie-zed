@@ -14,6 +14,10 @@ permissions:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    # what its jobs ask for: `report` opens issues, on a daily run alone
+    permissions:
+      contents: read
+      issues: write
 
   bump:
     name: cog bump
