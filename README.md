@@ -49,7 +49,7 @@ take the grammar's changes, move `rev` (Renovate proposes its `main` weekly) and
 fails while the file is not what the script makes, and on a capture the script does not map.
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
-[CONTRIBUTING](https://github.com/ide4cj/.github/blob/main/CONTRIBUTING.md)). A release (`bump.yml`,
+[CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
 by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR to
 [zed-industries/extensions](https://github.com/zed-industries/extensions) from the fork
 `ide4cj/extensions` when `ZED_EXTENSIONS_TOKEN` is set.
