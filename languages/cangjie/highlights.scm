@@ -177,6 +177,7 @@
 (package_full package_name: [(scoped_identifier) (identifier)] @module)
 (package_group package_name: [(scoped_identifier) (identifier)] @module)
 (sub_group_of_package package_name: [(scoped_identifier) (identifier)] @module)
+(package_alias package_name: [(scoped_identifier) (identifier)] @module)
 (package_alias alias: (identifier) @module)
 
 ; ===== Keywords =====
@@ -405,6 +406,12 @@
 ; ===== Macro calls =====
 
 (macro_call_sigil) @punctuation.special
+; Macro input/attribute body delimiters join the @-sigil's color so the
+; whole call head @Name(...) reads as one unit.
+(macro_input_open) @punctuation.special
+(macro_input_close) @punctuation.special
+(macro_attr_open) @punctuation.special
+(macro_attr_close) @punctuation.special
 (quote_keyword) @keyword
 (quote_close) @keyword
 
