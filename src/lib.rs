@@ -13,8 +13,9 @@ const SERVER: &str = "cjls";
 const PIN: &str = include_str!("../.cjls-version");
 
 struct Cangjie {
-    /// The binary downloaded this session, so a nightly is fetched once per session.
-    downloaded: Option<String>,
+    /// The binary downloaded this session and the `version` it was for, so a nightly is fetched
+    /// once per session and another `version` set meanwhile is downloaded.
+    downloaded: Option<(Option<String>, String)>,
 }
 
 impl zed::Extension for Cangjie {
@@ -38,6 +39,8 @@ impl zed::Extension for Cangjie {
         let command = match path.or_else(|| worktree.which(SERVER)) {
             Some(path) => path,
             None => {
+                // the extension's own key among the server's settings: none reach cjls yet; once
+                // `language_server_workspace_configuration` passes them (cjls's D32), without it
                 let wanted = settings
                     .as_ref()
                     .and_then(|s| s.get("version"))
@@ -53,7 +56,8 @@ impl Cangjie {
     /// The binary of the release `wanted` names (a tag or `nightly`), else of the one this
     /// extension picks; downloaded into the extension's directory unless it is there already.
     fn download(&mut self, id: &LanguageServerId, wanted: Option<&str>) -> Result<String> {
-        if let Some(path) = &self.downloaded
+        if let Some((was, path)) = &self.downloaded
+            && was.as_deref() == wanted
             && fs::metadata(path).is_ok_and(|m| m.is_file())
         {
             return Ok(path.clone());
@@ -103,7 +107,7 @@ impl Cangjie {
             id,
             &zed::LanguageServerInstallationStatus::None,
         );
-        self.downloaded = Some(path.clone());
+        self.downloaded = Some((wanted.map(str::to_owned), path.clone()));
         Ok(path)
     }
 
