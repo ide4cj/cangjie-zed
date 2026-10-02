@@ -34,6 +34,25 @@ In this order:
 `settings.version` downloads another release: a tag (`v0.2.0`), or `nightly`, cjls's master every
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
+`binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not
+know (`--stdio`) is a usage error.
+
+## The project
+
+cjls finds a project under each folder Zed opens: `cj-project.json`, else `cjpm.toml`, else the
+loose `.cj` files. Others go in `initialization_options` ([cjls's
+options](https://github.com/ide4cj/cjls/blob/master/docs/lsp-extensions.md#initialization-options)):
+
+```json
+{
+  "lsp": {
+    "cjls": {
+      "initialization_options": { "linkedProjects": ["/path/to/cj-project.json", "/path/to/dir"] }
+    }
+  }
+}
+```
+
 ## Development
 
 ```sh
@@ -41,6 +60,7 @@ cargo test                                    # the unit tests, natively
 cargo build --release --target wasm32-wasip2  # as Zed builds it
 script/highlights.py <tree-sitter-cangjie checkout>  # highlights.scm from its queries
 test/queries.sh <tree-sitter-cangjie checkout built with `tree-sitter build`>
+test/smoke.py <cjls> test                     # cjls started as the extension starts it
 ```
 
 `languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
