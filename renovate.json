@@ -3,11 +3,11 @@
   "extends": ["github>ide4cj/.github:renovate-preset"],
   "customManagers": [
     {
-      "description": "the grammar extension.toml pins, at the head of its main; CI fails until script/highlights.py is run on it",
+      "description": "the grammar extension.toml pins, at the head of its master; CI fails until script/highlights.py is run on it",
       "customType": "regex",
       "managerFilePatterns": ["/^extension\\.toml$/"],
       "matchStrings": ["repository = \"(?<depName>https://github\\.com/[^\"]+/tree-sitter-cangjie)\"\\nrev = \"(?<currentDigest>[0-9a-f]{40})\""],
-      "currentValueTemplate": "main",
+      "currentValueTemplate": "master",
       "datasourceTemplate": "git-refs"
     }
   ]

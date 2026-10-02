@@ -2,7 +2,7 @@
 
 [Cangjie](https://cangjie-lang.cn) in [Zed](https://zed.dev): the [cjls](https://github.com/ide4cj/cjls)
 language server, downloaded on first use, and highlighting, brackets, indentation and the outline
-from [tree-sitter-cangjie](https://github.com/BonZirka/tree-sitter-cangjie) (the revision
+from [tree-sitter-cangjie](https://github.com/ide4cj/tree-sitter-cangjie) (the revision
 `extension.toml` pins).
 
 ## Install
@@ -65,7 +65,7 @@ test/smoke.py <cjls> test                     # cjls started as the extension st
 
 `languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
 revision `extension.toml` pins, its captures renamed to Zed's, then `script/highlights.zed.scm`. To
-take the grammar's changes, move `rev` (Renovate proposes its `main` weekly) and run the script; CI
+take the grammar's changes, move `rev` (Renovate proposes its `master` weekly) and run the script; CI
 fails while the file is not what the script makes, and on a capture the script does not map.
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
