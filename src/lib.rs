@@ -53,7 +53,7 @@ impl zed::Extension for Cangjie {
 }
 
 impl Cangjie {
-    /// The binary of the release `wanted` names (a tag or `nightly`), else of the one this
+    /// The binary of the release `wanted` names (a tag, `nightly-build` too), else of the one this
     /// extension picks; downloaded into the extension's directory unless it is there already.
     fn download(&mut self, id: &LanguageServerId, wanted: Option<&str>) -> Result<String> {
         if let Some((was, path)) = &self.downloaded
@@ -86,7 +86,8 @@ impl Cangjie {
         };
         let path = format!("{dir}/cjls-{target}/{exe}");
         // a nightly moves under its name: fetched again once a session
-        let fresh = release.version != "nightly" && fs::metadata(&path).is_ok_and(|m| m.is_file());
+        let fresh =
+            release.version != "nightly-build" && fs::metadata(&path).is_ok_and(|m| m.is_file());
         if !fresh {
             zed::set_language_server_installation_status(
                 id,
