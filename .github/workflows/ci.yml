@@ -93,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
       - id: version
         shell: bash
-        run: echo "version=$([ ${{ matrix.cjls }} = pin ] && cat .cjls-version || echo nightly)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$([ ${{ matrix.cjls }} = pin ] && cat .cjls-version || echo nightly-build)" >> "$GITHUB_OUTPUT"
       # the assets the extension downloads, by the names src/lib.rs's `target` gives
       - id: cjls
         uses: ide4cj/.github/actions/cjls@master

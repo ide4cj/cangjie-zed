@@ -25,13 +25,13 @@ In this order:
   "lsp": {
     "cjls": {
       "binary": { "path": "/path/to/cjls", "env": { "CJLS_LOG_LEVEL": "DEBUG" } },
-      "settings": { "version": "nightly" }
+      "settings": { "version": "nightly-build" }
     }
   }
 }
 ```
 
-`settings.version` downloads another release: a tag (`v0.2.0`), or `nightly`, cjls's master every
+`settings.version` downloads another release: a tag (`v0.2.0`), or `nightly-build`, cjls's master every
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
 `binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not

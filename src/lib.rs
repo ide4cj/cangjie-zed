@@ -11,8 +11,6 @@ const REPOSITORY: &str = "ide4cj/cjls";
 const SERVER: &str = "cjls";
 /// The release this extension is tested with; empty until cjls has one, and then the latest.
 const PIN: &str = include_str!("../.cjls-version");
-/// The tag of cjls's nightly, a pre-release moving under it; a setting says `nightly` (cjls's D38).
-const NIGHTLY: &str = "nightly-build";
 
 struct Cangjie {
     /// The binary downloaded this session and the `version` it was for, so a nightly is fetched
@@ -55,7 +53,7 @@ impl zed::Extension for Cangjie {
 }
 
 impl Cangjie {
-    /// The binary of the release `wanted` names (a tag or `nightly`), else of the one this
+    /// The binary of the release `wanted` names (a tag, `nightly-build` too), else of the one this
     /// extension picks; downloaded into the extension's directory unless it is there already.
     fn download(&mut self, id: &LanguageServerId, wanted: Option<&str>) -> Result<String> {
         if let Some((was, path)) = &self.downloaded
@@ -88,7 +86,8 @@ impl Cangjie {
         };
         let path = format!("{dir}/cjls-{target}/{exe}");
         // a nightly moves under its name: fetched again once a session
-        let fresh = release.version != NIGHTLY && fs::metadata(&path).is_ok_and(|m| m.is_file());
+        let fresh =
+            release.version != "nightly-build" && fs::metadata(&path).is_ok_and(|m| m.is_file());
         if !fresh {
             zed::set_language_server_installation_status(
                 id,
@@ -114,8 +113,8 @@ impl Cangjie {
     }
 
     fn release(&self, wanted: Option<&str>) -> Result<zed::GithubRelease> {
-        if let Some(wanted) = wanted {
-            return zed::github_release_by_tag_name(REPOSITORY, tag(wanted));
+        if let Some(tag) = wanted {
+            return zed::github_release_by_tag_name(REPOSITORY, tag);
         }
         let latest = zed::latest_github_release(
             REPOSITORY,
@@ -171,12 +170,6 @@ fn target(os: zed::Os, arch: zed::Architecture) -> Option<(&'static str, Archive
     }
 }
 
-/// The tag of the release a `version` setting names: `nightly` is cjls's `nightly-build`, any other
-/// is a tag already.
-fn tag(wanted: &str) -> &str {
-    if wanted == "nightly" { NIGHTLY } else { wanted }
-}
-
 /// Whether two tags `vMAJOR.MINOR.PATCH` share their major and minor: a 0.x minor may break.
 fn same_minor(a: &str, b: &str) -> bool {
     fn minor(tag: &str) -> Option<(&str, &str)> {
@@ -207,12 +200,6 @@ mod tests {
     fn a_tag_that_is_no_version_is_never_within_a_minor() {
         assert!(!same_minor("nightly", "v0.1.0"));
         assert!(!same_minor("v0.1.0", ""));
-    }
-
-    #[test]
-    fn nightly_names_the_release_nightly_build_and_a_tag_itself() {
-        assert_eq!(tag("nightly"), "nightly-build");
-        assert_eq!(tag("v0.2.0"), "v0.2.0");
     }
 
     #[test]
