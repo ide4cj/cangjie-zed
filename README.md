@@ -53,6 +53,20 @@ options](https://github.com/ide4cj/cjls/blob/master/docs/lsp-extensions.md#initi
 }
 ```
 
+## Folding
+
+Zed folds by tree-sitter and indentation unless told to take the server's folds, a setting of the
+user's an extension cannot set. cjls folds by its own parse of the file — comments, imports, bodies,
+argument lists, `match` cases:
+
+```json
+{
+  "languages": {
+    "Cangjie": { "document_folding_ranges": "on" }
+  }
+}
+```
+
 ## Development
 
 ```sh
