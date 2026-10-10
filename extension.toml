@@ -13,4 +13,4 @@ languages = ["Cangjie"]
 # script/highlights.py makes languages/cangjie/highlights.scm from this revision's queries
 [grammars.cangjie]
 repository = "https://github.com/ide4cj/tree-sitter-cangjie"
-rev = "388ea32f446d99530732d56987d0b931310f3541"
+rev = "c03359d5a29e754c73f2972c017dc6d4fb8c65a2"
