@@ -1,6 +1,8 @@
 name = "Cangjie"
 grammar = "cangjie"
-path_suffixes = ["cj"]
+# `cj.macrocall`: the expansion cjls writes (README, Expand macro); Zed matches a suffix with dots
+# on the end of the file name
+path_suffixes = ["cj", "cj.macrocall"]
 line_comments = ["// "]
 block_comment = ["/* ", " */"]
 tab_size = 4
