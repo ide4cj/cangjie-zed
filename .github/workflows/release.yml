@@ -30,7 +30,7 @@ jobs:
       VERSION: ${{ inputs.version }}
       ZED_EXTENSIONS_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: v${{ inputs.version }}
       - name: GitHub release
