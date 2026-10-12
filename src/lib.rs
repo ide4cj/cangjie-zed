@@ -5,10 +5,16 @@
 
 use std::fs;
 
-use zed_extension_api::{self as zed, LanguageServerId, Result, settings::LspSettings};
+use zed_extension_api::{
+    self as zed, LanguageServerId, Result,
+    serde_json::{Value, json},
+    settings::LspSettings,
+};
 
 const REPOSITORY: &str = "ide4cj/cjls";
 const SERVER: &str = "cjls";
+/// The section of the client's configuration the server reads its settings from (cjls's D79).
+const SECTION: &str = "cjls";
 /// The release this extension is tested with; empty until cjls has one, and then the latest.
 const PIN: &str = include_str!("../.cjls-version");
 
@@ -39,8 +45,7 @@ impl zed::Extension for Cangjie {
         let command = match path.or_else(|| worktree.which(SERVER)) {
             Some(path) => path,
             None => {
-                // the extension's own key among the server's settings: none reach cjls yet; once
-                // `language_server_workspace_configuration` passes them (cjls's D32), without it
+                // the extension's own key among the server's settings, which cjls leaves alone
                 let wanted = settings
                     .as_ref()
                     .and_then(|s| s.get("version"))
@@ -50,6 +55,41 @@ impl zed::Extension for Cangjie {
         };
         Ok(zed::Command { command, args, env })
     }
+
+    fn language_server_initialization_options(
+        &mut self,
+        _: &LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Option<Value>> {
+        Ok(initialization_options(settings(worktree)))
+    }
+
+    fn language_server_workspace_configuration(
+        &mut self,
+        _: &LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Option<Value>> {
+        Ok(workspace_configuration(settings(worktree)))
+    }
+}
+
+/// `lsp.cjls.settings` in Zed's settings: the server's (cjls's D79), and the extension's `version`.
+fn settings(worktree: &zed::Worktree) -> Option<Value> {
+    LspSettings::for_worktree(SERVER, worktree)
+        .ok()
+        .and_then(|s| s.settings)
+}
+
+/// What the server starts with: its settings, over which Zed merges `lsp.cjls.initialization_options`.
+fn initialization_options(settings: Option<Value>) -> Option<Value> {
+    settings
+}
+
+/// What Zed answers the server's `workspace/configuration` from, the section `cjls` of it, and sends in
+/// `workspace/didChangeConfiguration` when the settings change. Without settings Zed answers `null`
+/// for the section, which leaves the server's as they are: `initialization_options` alone, if set.
+fn workspace_configuration(settings: Option<Value>) -> Option<Value> {
+    settings.map(|settings| json!({ SECTION: settings }))
 }
 
 impl Cangjie {
@@ -184,6 +224,26 @@ zed::register_extension!(Cangjie);
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_settings_are_what_the_server_starts_with_and_its_section_cjls() {
+        // arrange
+        let settings = json!({ "linkedProjects": ["/linked"], "version": "nightly-build" });
+
+        // act
+        let options = initialization_options(Some(settings.clone()));
+        let configuration = workspace_configuration(Some(settings.clone()));
+
+        // assert
+        assert_eq!(options, Some(settings.clone()));
+        assert_eq!(configuration, Some(json!({ "cjls": settings })));
+    }
+
+    #[test]
+    fn without_settings_there_is_no_section_and_no_options() {
+        assert_eq!(initialization_options(None), None);
+        assert_eq!(workspace_configuration(None), None);
+    }
 
     #[test]
     fn a_patch_release_is_within_the_minor_of_the_pin() {

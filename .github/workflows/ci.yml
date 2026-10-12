@@ -107,6 +107,11 @@ jobs:
           python-version: "3.x"
       - run: python test/smoke.py "${{ steps.cjls.outputs.path }}" test
         shell: bash
+      # the settings README.md lists are those of the cjls the extension pins (cjls's D79)
+      - name: The server's settings
+        if: matrix.cjls == 'pin'
+        run: python script/settings.py "${{ steps.cjls.outputs.path }}" --check
+        shell: bash
 
   # a red daily run is an issue, one at a time: the Monday triage starts from those
   report:
