@@ -37,21 +37,36 @@ night, fetched again at every start of Zed. The server's log: **dev: open langua
 `binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not
 know (`--stdio`) is a usage error.
 
-## The project
+## Settings
 
-cjls finds a project under each folder Zed opens: `cj-project.json`, else `cjpm.toml`, else the
-loose `.cj` files. Others go in `initialization_options` ([cjls's
-options](https://github.com/ide4cj/cjls/blob/master/docs/lsp-extensions.md#initialization-options)):
+The server's settings go in `lsp.cjls.settings`, beside the extension's own `version`:
 
 ```json
 {
   "lsp": {
     "cjls": {
-      "initialization_options": { "linkedProjects": ["/path/to/cj-project.json", "/path/to/dir"] }
+      "settings": { "linkedProjects": ["/path/to/cj-project.json", "/path/to/dir"] }
     }
   }
 }
 ```
+
+cjls finds a project under each folder Zed opens: `cj-project.json`, else `cjpm.toml`, else the
+loose `.cj` files; `linkedProjects` adds others. The extension gives the server these settings as
+its `initialization_options` (over which Zed merges `lsp.cjls.initialization_options`, if set) and
+as the section `cjls` of its configuration; a cjls that prints its settings' schema asks for that
+section again whenever Zed says the settings changed, without a restart ([cjls's D79](https://github.com/ide4cj/cjls/blob/master/docs/adr/0079-settings-are-r1s.md)).
+
+What cjls reads, as `cjls --config-schema` describes it (CI holds this table to the cjls the
+extension pins; a key a cjls does not know, `version` among them, it leaves alone):
+
+<!-- settings: made by script/settings.py from `cjls --config-schema` -->
+| `lsp.cjls.settings.` | type | default | |
+|---|---|---|---|
+| `linkedProjects` | string[] | `[]` | Projects to load, as rust-analyzer's: each an absolute path or a `file:` URI of a `cj-project.json`, or of a directory to find a project in. Under a root without a `cj-project.json`, they replace finding one there; outside every root, they are loaded besides. |
+| `cangjieHome` | string or null | `null` | The Cangjie SDK, an absolute path or a `file:` URI: looked for first, before `CANGJIE_HOME`, cjsdk's default toolchain and `cjc` on `PATH`. `std` is taken from it, and `${CANGJIE_HOME}` in a project's paths expands to it. |
+| `cangjieSrc` | string or null | `null` | The sources of the SDK's version, a directory holding `std/` as `cangjie_runtime`'s `stdlib/libs` does, an absolute path or a `file:` URI: looked for first, before `CANGJIE_SRC` and the SDK's `src`. Go to definition on a declaration of `std` goes there; `cjls fetch-src` puts them in the SDK's `src`. |
+<!-- /settings -->
 
 ## Folding
 
@@ -73,8 +88,9 @@ argument lists, `match` cases:
 cargo test                                    # the unit tests, natively
 cargo build --release --target wasm32-wasip2  # as Zed builds it
 script/highlights.py <tree-sitter-cangjie checkout>  # highlights.scm from its queries
+script/settings.py <cjls>                     # the server's settings into README.md
 test/queries.sh <tree-sitter-cangjie checkout built with `tree-sitter build`>
-test/smoke.py <cjls> test                     # cjls started as the extension starts it
+test/smoke.py <cjls> test                     # cjls started as the extension starts it, with settings
 ```
 
 `languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
