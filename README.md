@@ -68,6 +68,28 @@ extension pins; a key a cjls does not know, `version` among them, it leaves alon
 | `cangjieSrc` | string or null | `null` | The sources of the SDK's version, a directory holding `std/` as `cangjie_runtime`'s `stdlib/libs` does, an absolute path or a `file:` URI: looked for first, before `CANGJIE_SRC` and the SDK's `src`. Go to definition on a declaration of `std` goes there; `cjls fetch-src` puts them in the SDK's `src`. |
 <!-- /settings -->
 
+## Highlighting
+
+Tree-sitter colors a file as it is typed; what the tree cannot tell — a call of a type or of an enum
+constructor, a name at its use — cjls's semantic tokens tell, laid over it once Zed asks for them
+(off by default, a setting of the user's):
+
+```json
+{
+  "languages": {
+    "Cangjie": { "semantic_tokens": "combined" }
+  }
+}
+```
+
+The server then sends no token the grammar colors as well, and names the others in the grammar's
+classes ([cjls's D105](https://github.com/ide4cj/cjls/blob/master/docs/adr/0105-semantic-tokens-augment-the-grammar.md)):
+`languages/cangjie/semantic_token_rules.json` gives a type and modifier of the server's the name
+`highlights.scm` uses where Zed's default rules name it otherwise — a constructor `constructor`,
+a `const` and an enum constructor `constant`, `this` and `super` `variable.special`, a builtin type
+`type.builtin`, a type parameter `type`. `global_lsp_settings.semantic_token_rules` in the settings
+goes before them.
+
 ## Folding
 
 Zed folds by tree-sitter and indentation unless told to take the server's folds, a setting of the

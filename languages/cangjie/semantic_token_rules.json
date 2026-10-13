@@ -1,0 +1,34 @@
+[
+  {
+    "token_type": "method",
+    "token_modifiers": ["constructor"],
+    "style": ["constructor", "function.method", "function"]
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["constant"],
+    "style": ["constant"]
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["defaultLibrary"],
+    "style": ["variable.special", "variable.builtin"]
+  },
+  {
+    "token_type": "type",
+    "token_modifiers": ["defaultLibrary"],
+    "style": ["type.builtin", "type"]
+  },
+  {
+    "token_type": "typeParameter",
+    "style": ["type"]
+  },
+  {
+    "token_type": "macro",
+    "style": ["function.macro", "function"]
+  },
+  {
+    "token_type": "enumMember",
+    "style": ["constant"]
+  }
+]
