@@ -57,8 +57,8 @@ its `initialization_options` (over which Zed merges `lsp.cjls.initialization_opt
 as the section `cjls` of its configuration; a cjls that prints its settings' schema asks for that
 section again whenever Zed says the settings changed, without a restart ([cjls's D79](https://github.com/ide4cj/cjls/blob/master/docs/adr/0079-settings-are-r1s.md)).
 
-What cjls reads, as `cjls --config-schema` describes it (CI holds this table to the cjls the
-extension pins; a key a cjls does not know, `version` among them, it leaves alone):
+What cjls reads, as `cjls --config-schema` describes it (the cjls the extension pins, written by a
+bot in the PR that moves the pin; a key a cjls does not know, `version` among them, it leaves alone):
 
 <!-- settings: made by script/settings.py from `cjls --config-schema` -->
 | `lsp.cjls.settings.` | type | default | |
