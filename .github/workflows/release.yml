@@ -1,7 +1,9 @@
 name: Release
 
 # A version of the extension, `cog bump` in bump.yml, pushed to Zed's registry as a PR to
-# zed-industries/extensions when ZED_EXTENSIONS_TOKEN is set (a token that can push to a fork of it).
+# zed-industries/extensions when ZED_EXTENSIONS_TOKEN is set: a classic token (`public_repo`,
+# `workflow`) of the account whose fork of it the PR comes from, a personal one as Zed asks. The
+# action bumps an entry already there; the first one is made by hand (#16).
 # Rare on purpose: the extension downloads the newest cjls of its minor by itself (cjls's D32).
 on:
   workflow_call:
@@ -36,11 +38,22 @@ jobs:
       - name: GitHub release
         run: |
           gh release create "v$VERSION" --title "v$VERSION" --verify-tag --notes "cjls: the newest release within $(cut -d. -f1-2 .cjls-version)."
-      - if: env.ZED_EXTENSIONS_TOKEN != ''
-        uses: huacnlee/zed-extension-action@v1
+      - id: registry
+        if: env.ZED_EXTENSIONS_TOKEN != ''
+        run: |
+          toml=$(curl -fsSL https://raw.githubusercontent.com/zed-industries/extensions/main/extensions.toml)
+          if grep -qx '\[cangjie\]' <<< "$toml"; then
+            echo "listed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::cangjie is not in zed-industries/extensions yet: its first PR is made by hand"
+          fi
+      # the submodule at the tag's object, a commit as cog's tags are lightweight; with no `push-to`,
+      # the PR comes from the token's account's fork, forked if missing
+      - if: steps.registry.outputs.listed == 'true'
+        uses: huacnlee/zed-extension-action@v2
         with:
           extension-name: cangjie
-          push-to: ide4cj/extensions
+          tag: v${{ inputs.version }}
         env:
           COMMITTER_TOKEN: ${{ secrets.ZED_EXTENSIONS_TOKEN }}
       - if: env.ZED_EXTENSIONS_TOKEN == ''

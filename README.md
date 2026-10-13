@@ -7,8 +7,9 @@ from [tree-sitter-cangjie](https://github.com/ide4cj/tree-sitter-cangjie) (the r
 
 ## Install
 
-**zed: extensions** → *Cangjie*. Before it is in Zed's registry: clone this repository and
-**zed: install dev extension** on it (it needs Rust from rustup).
+Not in Zed's registry yet ([#16](https://github.com/ide4cj/cangjie-zed/issues/16)): clone this
+repository, check out its newest tag, and run **zed: install dev extension** on it (Zed builds it,
+with Rust from rustup). Once it is listed: **zed: extensions** → *Cangjie*.
 
 ## The server binary
 
@@ -120,9 +121,10 @@ its `master` weekly) and run the script; CI fails while the file is not what the
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
 [CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
-by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR to
-[zed-industries/extensions](https://github.com/zed-industries/extensions) from the fork
-`ide4cj/extensions` when `ZED_EXTENSIONS_TOKEN` is set.
+by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR that moves the extension's
+entry in [zed-industries/extensions](https://github.com/zed-industries/extensions) to its tag, from
+the fork of the account whose token `ZED_EXTENSIONS_TOKEN` is, once the entry is there: the first PR,
+which adds it, is made by hand ([Zed's publishing guide](https://zed.dev/docs/extensions/publishing/publishing-guide)).
 
 ## License
 
