@@ -13,34 +13,54 @@ import re
 import sys
 from pathlib import Path
 
-# nvim-treesitter's name -> Zed's
+# nvim-treesitter's name -> Zed's, where falling back along the dots would lose the class: a member
+# is `property` and a module `namespace` (as Zed's Go has them, and as Zed's default rules name
+# cjls's `property` and `namespace` tokens), `this` `variable.special`
 RENAMED = {
-    "parameter": "variable.parameter",
+    "variable.member": "property",
+    "module": "namespace",
     "variable.builtin": "variable.special",
     "character": "string",
     "markup.raw": "string.special",
 }
 # no color: nvim's spell checking
 DROPPED = {"spell"}
-# Zed's themes know them, or fall back along the dots (`function.macro` to `function`); `module`
-# has no color in Zed, as in its Rust
+# Zed's themes know them, or fall back along the dots (`function.method.call` to `function`,
+# `keyword.return` to `keyword`, `number.float` to `number`)
 KEPT = {
     "comment",
     "constant",
     "constant.builtin",
+    "constructor",
     "function",
+    "function.call",
     "function.macro",
+    "function.method.call",
     "keyword",
-    "module",
+    "keyword.conditional",
+    "keyword.coroutine",
+    "keyword.exception",
+    "keyword.function",
+    "keyword.import",
+    "keyword.modifier",
+    "keyword.operator",
+    "keyword.repeat",
+    "keyword.return",
+    "keyword.type",
     "number",
+    "number.float",
     "operator",
-    "property",
+    "punctuation.bracket",
+    "punctuation.delimiter",
     "punctuation.special",
     "string",
     "string.escape",
     "type",
     "type.builtin",
+    "type.definition",
     "variable",
+    "variable.parameter",
+    "variable.parameter.builtin",
 }
 
 HEADER = """\
