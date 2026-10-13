@@ -57,8 +57,8 @@ its `initialization_options` (over which Zed merges `lsp.cjls.initialization_opt
 as the section `cjls` of its configuration; a cjls that prints its settings' schema asks for that
 section again whenever Zed says the settings changed, without a restart ([cjls's D79](https://github.com/ide4cj/cjls/blob/master/docs/adr/0079-settings-are-r1s.md)).
 
-What cjls reads, as `cjls --config-schema` describes it (CI holds this table to the cjls the
-extension pins; a key a cjls does not know, `version` among them, it leaves alone):
+What cjls reads, as `cjls --config-schema` describes it (the cjls the extension pins, written by a
+bot in the PR that moves the pin; a key a cjls does not know, `version` among them, it leaves alone):
 
 <!-- settings: made by script/settings.py from `cjls --config-schema` -->
 | `lsp.cjls.settings.` | type | default | |
@@ -67,6 +67,27 @@ extension pins; a key a cjls does not know, `version` among them, it leaves alon
 | `cangjieHome` | string or null | `null` | The Cangjie SDK, an absolute path or a `file:` URI: looked for first, before `CANGJIE_HOME`, cjsdk's default toolchain and `cjc` on `PATH`. `std` is taken from it, and `${CANGJIE_HOME}` in a project's paths expands to it. |
 | `cangjieSrc` | string or null | `null` | The sources of the SDK's version, a directory holding `std/` as `cangjie_runtime`'s `stdlib/libs` does, an absolute path or a `file:` URI: looked for first, before `CANGJIE_SRC` and the SDK's `src`. Go to definition on a declaration of `std` goes there; `cjls fetch-src` puts them in the SDK's `src`. |
 <!-- /settings -->
+
+## Highlighting
+
+Tree-sitter colors a file as it is typed; what the tree cannot tell — a call of a type or of an enum
+constructor, a name at its use — cjls's semantic tokens tell, laid over it once Zed asks for them
+(off by default, a setting of the user's):
+
+```json
+{
+  "languages": {
+    "Cangjie": { "semantic_tokens": "combined" }
+  }
+}
+```
+
+The extension follows the grammar's names and renames none: `highlights.scm` is the grammar's own,
+and the server sends no token the grammar colors as well, naming the others in the grammar's
+classes ([cjls's D105](https://github.com/ide4cj/cjls/blob/master/docs/adr/0105-semantic-tokens-augment-the-grammar.md)).
+`languages/cangjie/semantic_token_rules.json` gives each type and modifier of the server's the
+capture tree-sitter gives the same place, then that capture's prefixes, as a theme falls back for
+tree-sitter. `global_lsp_settings.semantic_token_rules` in the settings goes before them.
 
 ## Expand macro
 
@@ -109,9 +130,8 @@ test/smoke.py <cjls> test                     # cjls started as the extension st
 ```
 
 `languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
-revision `extension.toml` pins, its captures renamed to Zed's, then `script/highlights.zed.scm`. To
-take the grammar's changes, move `rev` (Renovate proposes its `master` weekly) and run the script; CI
-fails while the file is not what the script makes, and on a capture the script does not map.
+revision `extension.toml` pins, as it is. To take the grammar's changes, move `rev` (Renovate proposes
+its `master` weekly) and run the script; CI fails while the file is not what the script makes.
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
 [CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
