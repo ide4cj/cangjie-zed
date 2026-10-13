@@ -72,9 +72,11 @@ extension pins; a key a cjls does not know, `version` among them, it leaves alon
 
 Put the cursor on a macro call (`@`, its name or its attribute) and open the code actions
 (**editor: toggle code actions**, `ctrl-.`/`cmd-.`): **Expand macro**. cjls writes the file with the
-call expanded, read-only, to `.cjls/expanded/<path>.cj.macrocall` under the project's root (with a
-`.gitignore`), and has Zed open it with the expansion selected. Hover and go to definition work in
-it while it matches the source; after an edit of the source, expand again.
+call expanded, read-only, to `.cache/cjls/expanded/<path>.cj.macrocall` under its project (the
+cjpm workspace or `cj-project.json` the file is of; the user's cache if that cannot be written, cjls's
+[D106](https://github.com/ide4cj/cjls/blob/master/docs/adr/0106-the-servers-directory-is-the-projects-cache-cjls.md);
+`.cache/cjls` ignores itself), and has Zed open it with the expansion selected. Hover and go to
+definition work in it while it matches the source; after an edit of the source, expand again.
 
 There is no command in the palette: an extension cannot add one, nor send the server's own
 `cjls/expandMacro` request (Zed's **editor: expand macro recursively** asks rust-analyzer only), so
