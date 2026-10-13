@@ -2,7 +2,29 @@
   {
     "token_type": "method",
     "token_modifiers": ["constructor"],
-    "style": ["constructor", "function.method", "function"]
+    "style": ["constructor"]
+  },
+  {
+    "token_type": "method",
+    "token_modifiers": ["declaration"],
+    "style": ["function"]
+  },
+  {
+    "token_type": "method",
+    "style": ["function.method.call", "function.method", "function"]
+  },
+  {
+    "token_type": "function",
+    "token_modifiers": ["declaration"],
+    "style": ["function"]
+  },
+  {
+    "token_type": "function",
+    "style": ["function.call", "function"]
+  },
+  {
+    "token_type": "macro",
+    "style": ["function.macro", "function"]
   },
   {
     "token_type": "variable",
@@ -12,7 +34,23 @@
   {
     "token_type": "variable",
     "token_modifiers": ["defaultLibrary"],
-    "style": ["variable.special", "variable.builtin"]
+    "style": ["variable.builtin", "variable"]
+  },
+  {
+    "token_type": "variable",
+    "style": ["variable"]
+  },
+  {
+    "token_type": "property",
+    "style": ["variable.member", "variable"]
+  },
+  {
+    "token_type": "parameter",
+    "style": ["variable.parameter", "variable"]
+  },
+  {
+    "token_type": "enumMember",
+    "style": ["constant"]
   },
   {
     "token_type": "type",
@@ -20,15 +58,35 @@
     "style": ["type.builtin", "type"]
   },
   {
+    "token_type": "type",
+    "style": ["type"]
+  },
+  {
+    "token_type": "class",
+    "style": ["type"]
+  },
+  {
+    "token_type": "struct",
+    "style": ["type"]
+  },
+  {
+    "token_type": "interface",
+    "style": ["type"]
+  },
+  {
+    "token_type": "enum",
+    "style": ["type"]
+  },
+  {
     "token_type": "typeParameter",
     "style": ["type"]
   },
   {
-    "token_type": "macro",
-    "style": ["function.macro", "function"]
+    "token_type": "namespace",
+    "style": ["module"]
   },
   {
-    "token_type": "enumMember",
-    "style": ["constant"]
+    "token_type": "comment",
+    "style": ["comment"]
   }
 ]
