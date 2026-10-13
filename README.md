@@ -89,6 +89,21 @@ classes ([cjls's D105](https://github.com/ide4cj/cjls/blob/master/docs/adr/0105-
 capture tree-sitter gives the same place, then that capture's prefixes, as a theme falls back for
 tree-sitter. `global_lsp_settings.semantic_token_rules` in the settings goes before them.
 
+## Expand macro
+
+Put the cursor on a macro call (`@`, its name or its attribute) and open the code actions
+(**editor: toggle code actions**, `ctrl-.`/`cmd-.`): **Expand macro**. cjls writes the file with the
+call expanded, read-only, to `.cache/cjls/expanded/<path>.cj.macrocall` under its project (the
+cjpm workspace or `cj-project.json` the file is of; the user's cache if that cannot be written, cjls's
+[D106](https://github.com/ide4cj/cjls/blob/master/docs/adr/0106-the-servers-directory-is-the-projects-cache-cjls.md);
+`.cache/cjls` ignores itself), and has Zed open it with the expansion selected. Hover and go to
+definition work in it while it matches the source; after an edit of the source, expand again.
+
+There is no command in the palette: an extension cannot add one, nor send the server's own
+`cjls/expandMacro` request (Zed's **editor: expand macro recursively** asks rust-analyzer only), so
+the code action is the way in ([cjls's D103](https://github.com/ide4cj/cjls/blob/master/docs/adr/0103-an-expansion-is-shown-as-a-request-and-as-a-read-only-file.md)).
+The extension gives `*.cj.macrocall` the Cangjie language, so that Zed asks cjls about the file.
+
 ## Folding
 
 Zed folds by tree-sitter and indentation unless told to take the server's folds, a setting of the
