@@ -274,4 +274,46 @@ mod tests {
         );
         assert_eq!(target(zed::Os::Mac, zed::Architecture::X8664), None);
     }
+
+    /// Zed ignores a key it does not know: a misspelled `token_modifiers` would make the rule match
+    /// every token of its type.
+    #[test]
+    fn every_semantic_token_rule_names_a_type_and_a_style_in_keys_zed_reads() {
+        // arrange
+        const KEYS: [&str; 9] = [
+            "token_type",
+            "token_modifiers",
+            "style",
+            "foreground_color",
+            "background_color",
+            "underline",
+            "strikethrough",
+            "font_weight",
+            "font_style",
+        ];
+        let rules: Value = zed::serde_json::from_str(include_str!(
+            "../languages/cangjie/semantic_token_rules.json"
+        ))
+        .expect("semantic_token_rules.json is JSON");
+
+        // act
+        let rules = rules.as_array().expect("an array of rules");
+
+        // assert
+        assert!(!rules.is_empty());
+        for rule in rules {
+            let rule = rule.as_object().expect("a rule is an object");
+            assert!(
+                rule.keys().all(|key| KEYS.contains(&key.as_str())),
+                "{rule:?}"
+            );
+            assert!(rule["token_type"].is_string(), "{rule:?}");
+            assert!(
+                rule["style"]
+                    .as_array()
+                    .is_some_and(|style| !style.is_empty()),
+                "{rule:?}"
+            );
+        }
+    }
 }

@@ -68,6 +68,27 @@ bot in the PR that moves the pin; a key a cjls does not know, `version` among th
 | `cangjieSrc` | string or null | `null` | The sources of the SDK's version, a directory holding `std/` as `cangjie_runtime`'s `stdlib/libs` does, an absolute path or a `file:` URI: looked for first, before `CANGJIE_SRC` and the SDK's `src`. Go to definition on a declaration of `std` goes there; `cjls fetch-src` puts them in the SDK's `src`. |
 <!-- /settings -->
 
+## Highlighting
+
+Tree-sitter colors a file as it is typed; what the tree cannot tell — a call of a type or of an enum
+constructor, a name at its use — cjls's semantic tokens tell, laid over it once Zed asks for them
+(off by default, a setting of the user's):
+
+```json
+{
+  "languages": {
+    "Cangjie": { "semantic_tokens": "combined" }
+  }
+}
+```
+
+The extension follows the grammar's names and renames none: `highlights.scm` is the grammar's own,
+and the server sends no token the grammar colors as well, naming the others in the grammar's
+classes ([cjls's D105](https://github.com/ide4cj/cjls/blob/master/docs/adr/0105-semantic-tokens-augment-the-grammar.md)).
+`languages/cangjie/semantic_token_rules.json` gives each type and modifier of the server's the
+capture tree-sitter gives the same place, then that capture's prefixes, as a theme falls back for
+tree-sitter. `global_lsp_settings.semantic_token_rules` in the settings goes before them.
+
 ## Folding
 
 Zed folds by tree-sitter and indentation unless told to take the server's folds, a setting of the
@@ -94,9 +115,8 @@ test/smoke.py <cjls> test                     # cjls started as the extension st
 ```
 
 `languages/cangjie/highlights.scm` is generated: tree-sitter-cangjie's `queries/highlights.scm` at the
-revision `extension.toml` pins, its captures renamed to Zed's, then `script/highlights.zed.scm`. To
-take the grammar's changes, move `rev` (Renovate proposes its `master` weekly) and run the script; CI
-fails while the file is not what the script makes, and on a capture the script does not map.
+revision `extension.toml` pins, as it is. To take the grammar's changes, move `rev` (Renovate proposes
+its `master` weekly) and run the script; CI fails while the file is not what the script makes.
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
 [CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
