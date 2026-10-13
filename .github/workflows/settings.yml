@@ -29,7 +29,7 @@ jobs:
           token: ${{ steps.app.outputs.token }}
       - id: pin
         run: echo "version=$(cat .cjls-version)" >> "$GITHUB_OUTPUT"
-      - uses: ide4cj/.github/actions/settings@settings-follow-pin
+      - uses: ide4cj/.github/actions/settings@master
         with:
           version: ${{ steps.pin.outputs.version }}
           run: python3 script/settings.py "$CJLS"
