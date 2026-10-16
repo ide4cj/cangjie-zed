@@ -1,7 +1,8 @@
 name: Bump
 
-# A release of the extension, by hand or once Renovate's PR moves .cjls-version to a new minor:
-# `cog bump` from the conventional commits, then release.yml.
+# A release of the extension, by hand or once Renovate's PR moves .cjls-version, then release.yml.
+# Its version is the pinned cjls's minor with a patch of its own (cjls's D132), when a commit since
+# the last release is one `cog bump --auto` would release.
 on:
   push:
     branches: [master]
@@ -40,14 +41,17 @@ jobs:
       - uses: cocogitto/cocogitto-action@v4
         with:
           command: check
+      - id: next
+        uses: ide4cj/.github/actions/client-version@master
       - id: bump
+        if: steps.next.outputs.version
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
         run: |
-          next=$(cog bump --auto --dry-run 2>/dev/null || true)
-          if [ -z "$next" ]; then echo "::notice::nothing to release"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cog bump --auto
-          echo "version=${next#v}" >> "$GITHUB_OUTPUT"
+          cog bump --version "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   release:
     needs: bump

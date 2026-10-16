@@ -135,7 +135,8 @@ its `master` weekly) and run the script; CI fails while the file is not what the
 
 A change the server has to make first is a branch of the same name here and in cjls (cjls's D32,
 [CONTRIBUTING](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md)). A release (`bump.yml`,
-by hand, or when Renovate moves `.cjls-version` to a new minor) opens the PR to
+by hand, or when Renovate moves `.cjls-version`), versioned on the pinned cjls's minor with a patch of
+its own (`0.5.x` for cjls `0.5`, cjls's D132), opens the PR to
 [zed-industries/extensions](https://github.com/zed-industries/extensions) from the fork
 `ide4cj/extensions` when `ZED_EXTENSIONS_TOKEN` is set.
 
