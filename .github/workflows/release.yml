@@ -2,7 +2,8 @@ name: Release
 
 # A version of the extension, `cog bump` in bump.yml, pushed to Zed's registry as a PR to
 # zed-industries/extensions when ZED_EXTENSIONS_TOKEN is set (a token that can push to a fork of it).
-# Rare on purpose: the extension downloads the newest cjls of its minor by itself (cjls's D32).
+# One per cjls release, as the version follows the pin (cjls's D132); between them the extension
+# downloads the newest cjls of its minor by itself (cjls's D32).
 on:
   workflow_call:
     inputs:
