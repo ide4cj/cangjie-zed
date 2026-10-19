@@ -1,0 +1,51 @@
+name: Highlights
+
+# highlights.scm is the grammar's, at the revision extension.toml pins (script/highlights.py): made
+# again in the PR that moves the pin, Renovate's, and pushed to it when it differs, as settings.yml
+# does for the server's settings. CI's Queries job checks it on every PR.
+on:
+  pull_request:
+    paths: [extension.toml, .github/workflows/highlights.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  highlights:
+    name: The grammar's highlights
+    # the app's token, which a fork's PR does not get, pushes; Renovate's PRs are this repository's
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_KEY }}
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.app.outputs.token }}
+      # the revision extension.toml pins, alone, unbuilt: the script copies a query
+      - name: The grammar
+        run: |
+          repo=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^repository = "\(.*\)"/\1/p' extension.toml)
+          rev=$(sed -n '/^\[grammars.cangjie\]/,/^\[/s/^rev = "\(.*\)"/\1/p' extension.toml)
+          git init -q "$RUNNER_TEMP/grammar"
+          git -C "$RUNNER_TEMP/grammar" fetch -q --depth 1 "$repo" "$rev"
+          git -C "$RUNNER_TEMP/grammar" checkout -q FETCH_HEAD
+          echo "REV=${rev:0:7}" >> "$GITHUB_ENV"
+      - env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          python3 script/highlights.py "$RUNNER_TEMP/grammar"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::notice::highlights.scm is tree-sitter-cangjie's at $REV"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --quiet -am "fix: highlights.scm of tree-sitter-cangjie at $REV"
+          git push origin "HEAD:$BRANCH"
+          echo "::notice::highlights.scm of tree-sitter-cangjie at $REV, pushed to $BRANCH"
