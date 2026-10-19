@@ -38,7 +38,7 @@ jobs:
         run: |
           gh release create "v$VERSION" --title "v$VERSION" --verify-tag --notes "cjls: the newest release within $(cut -d. -f1-2 .cjls-version)."
       - if: env.ZED_EXTENSIONS_TOKEN != ''
-        uses: huacnlee/zed-extension-action@v1
+        uses: huacnlee/zed-extension-action@v2.0.0
         with:
           extension-name: cangjie
           push-to: ide4cj/extensions
