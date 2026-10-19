@@ -102,7 +102,7 @@ jobs:
       - if: steps.cjls.outputs.path == ''
         shell: bash
         run: echo "::error::no cjls ${{ steps.version.outputs.version }} for this platform" && exit 1
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.x"
       - run: python test/smoke.py "${{ steps.cjls.outputs.path }}" test
