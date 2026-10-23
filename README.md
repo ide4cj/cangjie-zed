@@ -144,3 +144,12 @@ its own (`0.5.x` for cjls `0.5`, cjls's D132), opens the PR to
 
 MIT or Apache-2.0, as cjls. `languages/cangjie/highlights.scm` is made from tree-sitter-cangjie's
 (MIT).
+
+## Binary library sources
+
+Actual SDK and binary library sources keep their `file:` URIs. cjls can report
+readonly source roots through `cjls/binarySourceRoots`, but Zed extension API
+0.7.0 provides neither a custom LSP notification callback nor a buffer readonly
+setter ([API source](https://github.com/zed-industries/zed/blob/main/crates/extension_api/src/extension_api.rs)).
+This extension therefore cannot protect these files from editing. It does not
+change permissions on SDK directories or user source checkouts.
