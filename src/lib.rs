@@ -241,38 +241,78 @@ mod tests {
 
     #[test]
     fn without_settings_there_is_no_section_and_no_options() {
-        assert_eq!(initialization_options(None), None);
-        assert_eq!(workspace_configuration(None), None);
+        // arrange
+        let settings = None;
+
+        // act
+        let options = initialization_options(settings.clone());
+        let configuration = workspace_configuration(settings);
+
+        // assert
+        assert_eq!(options, None);
+        assert_eq!(configuration, None);
     }
 
     #[test]
     fn a_patch_release_is_within_the_minor_of_the_pin() {
-        assert!(same_minor("v0.1.3", "v0.1.0"));
+        // arrange
+        let release = "v0.1.3";
+        let pin = "v0.1.0";
+
+        // act
+        let within_minor = same_minor(release, pin);
+
+        // assert
+        assert!(within_minor);
     }
 
     #[test]
     fn a_new_minor_is_not() {
-        assert!(!same_minor("v0.2.0", "v0.1.0"));
-        assert!(!same_minor("v1.1.0", "v0.1.0"));
+        // arrange
+        let pin = "v0.1.0";
+
+        // act
+        let newer_minor = same_minor("v0.2.0", pin);
+        let newer_major = same_minor("v1.1.0", pin);
+
+        // assert
+        assert!(!newer_minor);
+        assert!(!newer_major);
     }
 
     #[test]
     fn a_tag_that_is_no_version_is_never_within_a_minor() {
-        assert!(!same_minor("nightly", "v0.1.0"));
-        assert!(!same_minor("v0.1.0", ""));
+        // arrange
+        let release = "v0.1.0";
+
+        // act
+        let nightly = same_minor("nightly", release);
+        let empty_pin = same_minor(release, "");
+
+        // assert
+        assert!(!nightly);
+        assert!(!empty_pin);
     }
 
     #[test]
     fn the_three_platforms_of_a_release_have_a_target_and_others_none() {
-        assert_eq!(
-            target(zed::Os::Mac, zed::Architecture::Aarch64),
-            Some(("aarch64-apple-darwin", Archive::TarGz))
-        );
-        assert_eq!(
-            target(zed::Os::Windows, zed::Architecture::X8664),
-            Some(("x86_64-pc-windows-gnu", Archive::Zip))
-        );
-        assert_eq!(target(zed::Os::Mac, zed::Architecture::X8664), None);
+        // arrange
+        let mac_arm = (zed::Os::Mac, zed::Architecture::Aarch64);
+        let linux_x64 = (zed::Os::Linux, zed::Architecture::X8664);
+        let windows_x64 = (zed::Os::Windows, zed::Architecture::X8664);
+        let mac_x64 = (zed::Os::Mac, zed::Architecture::X8664);
+
+        // act
+        let mac = target(mac_arm.0, mac_arm.1);
+        let linux = target(linux_x64.0, linux_x64.1);
+        let windows = target(windows_x64.0, windows_x64.1);
+        let unsupported = target(mac_x64.0, mac_x64.1);
+
+        // assert
+        assert_eq!(mac, Some(("aarch64-apple-darwin", Archive::TarGz)));
+        assert_eq!(linux, Some(("x86_64-unknown-linux-gnu", Archive::TarGz)));
+        assert_eq!(windows, Some(("x86_64-pc-windows-gnu", Archive::Zip)));
+        assert_eq!(unsupported, None);
     }
 
     /// Zed ignores a key it does not know: a misspelled `token_modifiers` would make the rule match
@@ -291,12 +331,11 @@ mod tests {
             "font_weight",
             "font_style",
         ];
-        let rules: Value = zed::serde_json::from_str(include_str!(
-            "../languages/cangjie/semantic_token_rules.json"
-        ))
-        .expect("semantic_token_rules.json is JSON");
+        let source = include_str!("../languages/cangjie/semantic_token_rules.json");
 
         // act
+        let rules: Value =
+            zed::serde_json::from_str(source).expect("semantic_token_rules.json is JSON");
         let rules = rules.as_array().expect("an array of rules");
 
         // assert
