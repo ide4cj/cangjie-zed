@@ -49,9 +49,11 @@ def receive(server, id, configuration=None):
 
 
 def main(cjls, folder):
+    # arrange
     root = Path(folder).resolve()
     server = subprocess.Popen([cjls], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     try:
+        # act
         send(server, {"id": 1, "method": "initialize", "params": {
             "processId": None,
             "rootUri": root.as_uri(),
@@ -59,23 +61,36 @@ def main(cjls, folder):
             "capabilities": {},
         }})
         initialized = receive(server, 1)
+
+        # assert
         assert "result" in initialized, initialized
         name = initialized["result"].get("serverInfo", {}).get("name")
         assert name == "cjls", initialized["result"]
+
+        # act
         send(server, {"method": "initialized", "params": {}})
         send(server, {"id": 2, "method": "shutdown"})
-        assert "result" in receive(server, 2)
+        shutdown = receive(server, 2)
+
+        # assert
+        assert "result" in shutdown, shutdown
+
+        # act
         send(server, {"method": "exit"})
-        code = server.wait(timeout=60)
+        code = server.wait()
+
+        # assert
         assert code == 0, f"cjls exited with {code}"
     finally:
         if server.poll() is None:
             server.kill()
+            server.wait()
     print(f"{name} {initialized['result']['serverInfo'].get('version')}: initialized, shut down, exited")
 
 
 def settings(cjls):
     """A project linked by `lsp.cjls.settings.linkedProjects` is loaded: its symbol is found."""
+    # arrange
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp, "ws")
         root.mkdir()
@@ -87,6 +102,7 @@ def settings(cjls):
         configuration = {"cjls": user}
         server = subprocess.Popen([cjls], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         try:
+            # act
             send(server, {"id": 1, "method": "initialize", "params": {
                 "processId": None,
                 "rootUri": root.as_uri(),
@@ -97,7 +113,12 @@ def settings(cjls):
                 }},
                 "initializationOptions": user,
             }})
-            assert "result" in receive(server, 1, configuration)
+            initialized = receive(server, 1, configuration)
+
+            # assert
+            assert "result" in initialized, initialized
+
+            # act: linked projects load in the background
             send(server, {"method": "initialized", "params": {}})
             send(server, {"method": "workspace/didChangeConfiguration",
                           "params": {"settings": configuration}})
@@ -105,22 +126,38 @@ def settings(cjls):
             # it has, a hang is CI's to end
             id = 2
             while True:
+                # act
                 send(server, {"id": id, "method": "workspace/symbol", "params": {"query": "findLinked"}})
                 answer = receive(server, id, configuration)
                 id += 1
                 error = answer.get("error")
+
+                # assert: a loading snapshot may ask the client to retry
                 assert error is None or error["code"] == CONTENT_MODIFIED, answer
                 if error is None and answer["result"]:
                     break
             names = [s["name"] for s in answer["result"]]
+
+            # assert
             assert names == ["findLinked"], names
+
+            # act
             send(server, {"id": id, "method": "shutdown"})
-            assert "result" in receive(server, id, configuration)
+            shutdown = receive(server, id, configuration)
+
+            # assert
+            assert "result" in shutdown, shutdown
+
+            # act
             send(server, {"method": "exit"})
-            server.wait()
+            code = server.wait()
+
+            # assert
+            assert code == 0, f"cjls exited with {code}"
         finally:
             if server.poll() is None:
                 server.kill()
+                server.wait()
     print(f"lsp.cjls.settings: {linked} linked, its symbol found")
 
 

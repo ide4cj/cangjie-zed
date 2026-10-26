@@ -140,6 +140,8 @@ its own (`0.5.x` for cjls `0.5`, cjls's D132), opens the PR to
 [zed-industries/extensions](https://github.com/zed-industries/extensions) from the fork
 `ide4cj/extensions` when `ZED_EXTENSIONS_TOKEN` is set.
 
+Tests follow the shared [AAA and cleanup conventions](https://github.com/ide4cj/.github/blob/master/CONTRIBUTING.md#tests).
+
 ## License
 
 MIT or Apache-2.0, as cjls. `languages/cangjie/highlights.scm` is made from tree-sitter-cangjie's
