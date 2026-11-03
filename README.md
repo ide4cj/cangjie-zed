@@ -35,11 +35,16 @@ In this order:
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
 Values in `lsp.cjls.binary.env` expand `$VAR`, `${VAR}` and a leading `~`
-once against the worktree's shell environment before launching cjls. For example,
+before launching cjls, using the worktree's shell environment as fallback. For example,
 `"CANGJIE_STDX_PATH": "$HOME/.cjpm/toolchains/default/linux_x86_64_cjnative/static/stdx"`
-uses that environment's home directory. Entries cannot refer to other overrides;
-inserted values are not expanded again. Unknown variables remain literal and
-produce warnings without logging values. `~` uses `HOME`, falling back to
+uses `HOME` from `binary.env` if configured, otherwise the shell's `HOME`.
+References resolve other overrides first, including chains such as
+`"SDK": "$HOME/sdk", "CANGJIE_STDX_PATH": "${SDK}/static/stdx"`, independently
+of entry order. Self-references such as `"PATH": "$PATH:/tools"` use the inherited
+value. Inherited values are inserted literally. Cycles (including self-references
+without an inherited value) leave affected entries and their dependents unchanged
+and produce warnings. Unknown variables remain literal and
+produce warnings without logging values. `~` uses inherited `HOME`, falling back to
 `USERPROFILE`; `~user` and other shell expressions remain literal. Restart the
 language server after changing its environment.
 
