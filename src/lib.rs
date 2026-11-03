@@ -3,6 +3,8 @@
 //! within the minor of the release it pins (`.cjls-version`), which it supports, and that pin
 //! otherwise.
 
+mod environment;
+
 use std::fs;
 
 use zed_extension_api::{
@@ -40,6 +42,7 @@ impl zed::Extension for Cangjie {
         let (path, args, env) = binary.map_or((None, None, None), |b| (b.path, b.arguments, b.env));
         let args = args.unwrap_or_default();
         let env = env.map(|env| env.into_iter().collect()).unwrap_or_default();
+        let env = environment::expand(env, &worktree.shell_env(), |message| eprintln!("{message}"));
 
         // `lsp.cjls.binary.path`, then `cjls` on PATH, then the download
         let command = match path.or_else(|| worktree.which(SERVER)) {

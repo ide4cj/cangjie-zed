@@ -34,6 +34,20 @@ In this order:
 `settings.version` downloads another release: a tag (`v0.2.0`), or `nightly-build`, cjls's master every
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
+Values in `lsp.cjls.binary.env` expand `$VAR`, `${VAR}` and a leading `~`
+before launching cjls, using the worktree's shell environment as fallback. For example,
+`"CANGJIE_STDX_PATH": "$HOME/.cjpm/toolchains/default/linux_x86_64_cjnative/static/stdx"`
+uses `HOME` from `binary.env` if configured, otherwise the shell's `HOME`.
+References resolve other overrides first, including chains such as
+`"SDK": "$HOME/sdk", "CANGJIE_STDX_PATH": "${SDK}/static/stdx"`, independently
+of entry order. Self-references such as `"PATH": "$PATH:/tools"` use the inherited
+value. Inherited values are inserted literally. Cycles (including self-references
+without an inherited value) leave affected entries and their dependents unchanged
+and produce warnings. Unknown variables remain literal and
+produce warnings without logging values. `~` uses inherited `HOME`, falling back to
+`USERPROFILE`; `~user` and other shell expressions remain literal. Restart the
+language server after changing its environment.
+
 `binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not
 know (`--stdio`) is a usage error.
 
