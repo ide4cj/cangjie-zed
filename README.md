@@ -34,6 +34,15 @@ In this order:
 `settings.version` downloads another release: a tag (`v0.2.0`), or `nightly-build`, cjls's master every
 night, fetched again at every start of Zed. The server's log: **dev: open language server logs**.
 
+Values in `lsp.cjls.binary.env` expand `$VAR`, `${VAR}` and a leading `~`
+once against the worktree's shell environment before launching cjls. For example,
+`"CANGJIE_STDX_PATH": "$HOME/.cjpm/toolchains/default/linux_x86_64_cjnative/static/stdx"`
+uses that environment's home directory. Entries cannot refer to other overrides;
+inserted values are not expanded again. Unknown variables remain literal and
+produce warnings without logging values. `~` uses `HOME`, falling back to
+`USERPROFILE`; `~user` and other shell expressions remain literal. Restart the
+language server after changing its environment.
+
 `binary.arguments` stays empty: with none `cjls` serves LSP over stdio, and an argument it does not
 know (`--stdio`) is a usage error.
 
