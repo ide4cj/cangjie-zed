@@ -141,6 +141,7 @@ mod tests {
 
     #[test]
     fn stdx_and_path_expand_from_the_inherited_environment() {
+        // arrange
         let extra = pairs(&[
             (
                 "STDX",
@@ -151,23 +152,26 @@ mod tests {
             ("LOG", "DEBUG"),
         ]);
         let inherited = pairs(&[("HOME", "/home/user"), ("PATH", "/bin")]);
+        let expected = pairs(&[
+            (
+                "STDX",
+                "/home/user/.cjpm/toolchains/default/linux_x86_64_cjnative/static/stdx",
+            ),
+            ("PATH", "/bin:/tools"),
+            ("EMPTY", ""),
+            ("LOG", "DEBUG"),
+        ]);
+
+        // act
         let result = expand(extra, &inherited, |message| panic!("{message}"));
-        assert_eq!(
-            result,
-            pairs(&[
-                (
-                    "STDX",
-                    "/home/user/.cjpm/toolchains/default/linux_x86_64_cjnative/static/stdx"
-                ),
-                ("PATH", "/bin:/tools"),
-                ("EMPTY", ""),
-                ("LOG", "DEBUG")
-            ])
-        );
+
+        // assert
+        assert_eq!(result, expected);
     }
 
     #[test]
     fn inherited_values_stay_literal_and_overrides_take_precedence() {
+        // arrange
         let inherited = pairs(&[
             ("HOME", "/home/user"),
             ("SDK", "$HOME/sdk"),
@@ -179,26 +183,28 @@ mod tests {
             ("COPY", "$HOME"),
             ("TILDE", "$TILDE"),
         ]);
+        let expected = pairs(&[
+            ("HOME", "/override"),
+            ("SDK", "$HOME/sdk"),
+            ("COPY", "/override"),
+            ("TILDE", "~/sdk"),
+        ]);
         let mut reversed = extra.clone();
         reversed.reverse();
-        let mut result = expand(extra, &inherited, |message| panic!("{message}"));
+
+        // act
+        let result = expand(extra, &inherited, |message| panic!("{message}"));
         let mut other = expand(reversed, &inherited, |message| panic!("{message}"));
-        assert_eq!(
-            result,
-            pairs(&[
-                ("HOME", "/override"),
-                ("SDK", "$HOME/sdk"),
-                ("COPY", "/override"),
-                ("TILDE", "~/sdk")
-            ])
-        );
-        result.sort();
-        other.sort();
-        assert_eq!(result, other);
+        other.reverse();
+
+        // assert
+        assert_eq!(result, expected);
+        assert_eq!(other, expected);
     }
 
     #[test]
     fn entry_chains_resolve_independently_of_order_and_empty_overrides_win() {
+        // arrange
         let extra = pairs(&[
             ("STDX", "${SDK}/static/stdx"),
             ("SDK", "$ROOT/sdk"),
@@ -221,17 +227,22 @@ mod tests {
             ("COPY", ""),
             ("PATH", "/bin:/tools"),
         ]);
-        let result = expand(extra.clone(), &inherited, |message| panic!("{message}"));
-        assert_eq!(result, expected);
-        let mut reversed = extra;
+        let mut reversed = extra.clone();
         reversed.reverse();
-        let mut result = expand(reversed, &inherited, |message| panic!("{message}"));
-        result.reverse();
+
+        // act
+        let result = expand(extra, &inherited, |message| panic!("{message}"));
+        let mut other = expand(reversed, &inherited, |message| panic!("{message}"));
+        other.reverse();
+
+        // assert
         assert_eq!(result, expected);
+        assert_eq!(other, expected);
     }
 
     #[test]
     fn cycles_and_their_dependents_stay_unchanged_in_either_entry_order() {
+        // arrange
         let extra = pairs(&[
             ("A", "secret-$B"),
             ("B", "${A}/suffix"),
@@ -239,29 +250,42 @@ mod tests {
             ("SELF", "$SELF"),
             ("OK", "$HOME/ok"),
         ]);
-        let mut expected = extra.clone();
-        expected.last_mut().unwrap().1 = "/home/ok".to_string();
+        let expected = pairs(&[
+            ("A", "secret-$B"),
+            ("B", "${A}/suffix"),
+            ("CHILD", "$A/child"),
+            ("SELF", "$SELF"),
+            ("OK", "/home/ok"),
+        ]);
         let inherited = pairs(&[("HOME", "/home"), ("A", "/old")]);
+        let mut reversed = extra.clone();
+        reversed.reverse();
         let mut warnings = Vec::new();
-        assert_eq!(
-            expand(extra.clone(), &inherited, |message| warnings.push(message)),
-            expected
-        );
+        let mut reverse_warnings = Vec::new();
+
+        // act
+        let result = expand(extra, &inherited, |message| warnings.push(message));
+        let mut other = expand(reversed, &inherited, |message| {
+            reverse_warnings.push(message)
+        });
+        other.reverse();
+
+        // assert
+        assert_eq!(result, expected);
+        assert_eq!(other, expected);
         assert_eq!(warnings.len(), 4);
+        assert_eq!(reverse_warnings.len(), 4);
         assert!(
             warnings
                 .iter()
+                .chain(&reverse_warnings)
                 .all(|message| message.contains("cyclic") && !message.contains("secret-"))
         );
-        let mut reversed = extra;
-        reversed.reverse();
-        let mut result = expand(reversed, &inherited, |_| {});
-        result.reverse();
-        assert_eq!(result, expected);
     }
 
     #[test]
     fn home_supports_windows_and_prefers_home_over_userprofile() {
+        // arrange
         let extra = pairs(&[
             ("ROOT", "~"),
             ("SDK", "~\\sdk"),
@@ -269,47 +293,48 @@ mod tests {
             ("LITERAL", "~user/$(pwd)"),
         ]);
         let inherited = pairs(&[("USERPROFILE", "C:\\Users\\user")]);
-        assert_eq!(
-            expand(extra, &inherited, |message| panic!("{message}")),
-            pairs(&[
-                ("ROOT", "C:\\Users\\user"),
-                ("SDK", "C:\\Users\\user\\sdk"),
-                ("SRC", "C:\\Users\\user/src"),
-                ("LITERAL", "~user/$(pwd)")
-            ])
-        );
-        assert_eq!(
-            expand(
-                pairs(&[("ROOT", "~")]),
-                &pairs(&[("HOME", "/home"), ("USERPROFILE", "/fallback")]),
-                |message| panic!("{message}")
-            ),
-            pairs(&[("ROOT", "/home")])
-        );
+        let expected = pairs(&[
+            ("ROOT", "C:\\Users\\user"),
+            ("SDK", "C:\\Users\\user\\sdk"),
+            ("SRC", "C:\\Users\\user/src"),
+            ("LITERAL", "~user/$(pwd)"),
+        ]);
+        let home = pairs(&[("HOME", "/home"), ("USERPROFILE", "/fallback")]);
+        let root = pairs(&[("ROOT", "~")]);
+        let expected_home = pairs(&[("ROOT", "/home")]);
+
+        // act
+        let result = expand(extra, &inherited, |message| panic!("{message}"));
+        let preferred_home = expand(root, &home, |message| panic!("{message}"));
+
+        // assert
+        assert_eq!(result, expected);
+        assert_eq!(preferred_home, expected_home);
     }
 
     #[test]
     fn missing_references_stay_literal_and_warnings_do_not_reveal_values() {
+        // arrange
+        let extra = pairs(&[
+            ("TOKEN", "secret-${MISSING}-$MISSING"),
+            ("SDK", "~/sdk"),
+            ("EMPTY", "$EMPTY"),
+            ("UNICODE", "данные/$EMPTY/🙂"),
+        ]);
+        let inherited = pairs(&[("EMPTY", "")]);
+        let expected = pairs(&[
+            ("TOKEN", "secret-${MISSING}-$MISSING"),
+            ("SDK", "~/sdk"),
+            ("EMPTY", ""),
+            ("UNICODE", "данные//🙂"),
+        ]);
         let mut warnings = Vec::new();
-        let result = expand(
-            pairs(&[
-                ("TOKEN", "secret-${MISSING}-$MISSING"),
-                ("SDK", "~/sdk"),
-                ("EMPTY", "$EMPTY"),
-                ("UNICODE", "данные/$EMPTY/🙂"),
-            ]),
-            &pairs(&[("EMPTY", "")]),
-            |message| warnings.push(message),
-        );
-        assert_eq!(
-            result,
-            pairs(&[
-                ("TOKEN", "secret-${MISSING}-$MISSING"),
-                ("SDK", "~/sdk"),
-                ("EMPTY", ""),
-                ("UNICODE", "данные//🙂")
-            ])
-        );
+
+        // act
+        let result = expand(extra, &inherited, |message| warnings.push(message));
+
+        // assert
+        assert_eq!(result, expected);
         assert_eq!(warnings.len(), 2);
         assert!(warnings[0].contains("TOKEN") && warnings[0].contains("MISSING"));
         assert!(warnings[1].contains("SDK"));
